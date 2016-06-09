@@ -90,16 +90,9 @@ namespace obLib{
 	  BidsOrderId2OrderStateContainer::iterator it = _bids.find(order->orderId());
 	  if(it != _bids.end()){
 	      Order* origOrder = it->second.ptr();
+	      _depth.replace_order(it->second.getPrice(), order->price(), it->second.open_qty(), order->order_qty(), order->is_buy());
 	      Quantity delta = origOrder->order_qty() - order->order_qty();
 	      bool noChangeInPrice = order->price() == origOrder->price();
-	      if(noChangeInPrice){
-		  // Only Qunatity changes
-		  _depth.changeQtyOrder(order->price(), delta, order->is_buy());
-	      }else{
-		  // Price changes
-		  // To Do
-		  _depth.replace_order(it->second.getPrice(), order->price(), it->second.open_qty(), order->order_qty(), order->is_buy());
-	      }
 	      // Set the new Open Quantity
 	      it->second.change_qty(delta);
 	      if(!noChangeInPrice){

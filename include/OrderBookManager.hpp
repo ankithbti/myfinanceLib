@@ -32,7 +32,7 @@ namespace obLib{
 	  book->addNew(order);
 	  break;
 	case 'M':
-	  book->replace(order);
+	  //book->replace(order);
 	  break;
 	case 'X':
 	  book->cancel(order);

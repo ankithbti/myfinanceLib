@@ -16,16 +16,36 @@ namespace obLib{
 
     std::chrono::high_resolution_clock::time_point _startTime;
 
+    static long _averageLatency ;
+    static long _count;
+    static long _maxLatency;
+    static long _minlatency;
     LatencyChecker() : _startTime(std::chrono::high_resolution_clock::now()){
-
     }
 
     ~LatencyChecker(){
-      //auto latency = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - _startTime);
-      std::cout << " Latency: " <<  (std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - _startTime)).count() << " ns" << std::endl;
+      auto latency = (std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - _startTime)).count();
+      if(_minlatency > latency){
+	  _minlatency = latency;
+      }
+      if(_maxLatency < latency){
+	  _maxLatency = latency;
+      }
+      _averageLatency += latency;
+      ++_count;
+      std::cout << " Latency: " <<  latency << " ns" << std::endl;
+    }
+
+    static long getAverageLatency(){
+      return _averageLatency/_count;
     }
 
   };
+
+  long LatencyChecker::_count = 0;
+  long LatencyChecker::_maxLatency = 0;
+  long LatencyChecker::_minlatency = 0;
+  long LatencyChecker::_averageLatency = 0;
 }
 
 

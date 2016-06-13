@@ -19,8 +19,8 @@ namespace obLib{
 
   public:
 
-    typedef std::unordered_map<OrderId, OrderStateKeeper> BidsOrderId2OrderStateContainer;
-    typedef std::unordered_map<OrderId, OrderStateKeeper> AsksOrderId2OrderStateContainer;
+    typedef std::unordered_map<OrderId, OrderStateKeeper*> BidsOrderId2OrderStateContainer;
+    typedef std::unordered_map<OrderId, OrderStateKeeper*> AsksOrderId2OrderStateContainer;
 
   private:
 
@@ -45,11 +45,11 @@ namespace obLib{
 	  throw std::runtime_error("New Order can not have 0 Qty.");
       }
 
-      OrderStateKeeper osk(order);
+      OrderStateKeeper *osk = new OrderStateKeeper(order);
       if(order->is_buy()){
-	  _bids.insert(std::pair<OrderId, OrderStateKeeper>(order->orderId(), osk));
+	  _bids.insert(std::pair<OrderId, OrderStateKeeper*>(order->orderId(), osk));
       }else{
-	  _asks.insert(std::pair<OrderId, OrderStateKeeper>(order->orderId(), osk));
+	  _asks.insert(std::pair<OrderId, OrderStateKeeper*>(order->orderId(), osk));
       }
 
       // Try adjusting our depth
@@ -62,7 +62,7 @@ namespace obLib{
       if(order->is_buy()){
 	  BidsOrderId2OrderStateContainer::iterator it = _bids.find(order->orderId());
 	  if(it != _bids.end()){
-	      Order* origOrder = it->second.ptr();
+	      Order* origOrder = it->second->ptr();
 	      _depth.close_order(origOrder->price(), origOrder->order_qty(), origOrder->is_buy());
 	      // Also, remove this orderId from our internalMap
 	      _bids.erase(it);
@@ -72,7 +72,7 @@ namespace obLib{
       }else{
 	  AsksOrderId2OrderStateContainer::iterator it = _asks.find(order->orderId());
 	  if(it != _asks.end()){
-	      Order* origOrder = it->second.ptr();
+	      Order* origOrder = it->second->ptr();
 	      _depth.close_order(origOrder->price(), origOrder->order_qty(), origOrder->is_buy());
 	      // Also, remove this orderId from our internalMap
 	      _bids.erase(it);
@@ -89,14 +89,14 @@ namespace obLib{
       if(order->is_buy()){
 	  BidsOrderId2OrderStateContainer::iterator it = _bids.find(order->orderId());
 	  if(it != _bids.end()){
-	      Order* origOrder = it->second.ptr();
-	      _depth.replace_order(it->second.getPrice(), order->price(), it->second.open_qty(), order->order_qty(), order->is_buy());
+	      Order* origOrder = it->second->ptr();
+	      _depth.replace_order(it->second->getPrice(), order->price(), it->second->open_qty(), order->order_qty(), order->is_buy());
 	      Quantity delta = origOrder->order_qty() - order->order_qty();
 	      bool noChangeInPrice = order->price() == origOrder->price();
 	      // Set the new Open Quantity
-	      it->second.change_qty(delta);
+	      it->second->change_qty(delta);
 	      if(!noChangeInPrice){
-		  it->second.setPrice(order->price());
+		  it->second->setPrice(order->price());
 	      }
 	  }else{
 	      // Treat it as new order
@@ -105,7 +105,7 @@ namespace obLib{
       }else{
 	  AsksOrderId2OrderStateContainer::iterator it = _asks.find(order->orderId());
 	  if(it != _asks.end()){
-	      Order* origOrder = it->second.ptr();
+	      Order* origOrder = it->second->ptr();
 	      Quantity delta = origOrder->order_qty() - order->order_qty();
 	      bool noChangeInPrice = order->price() == origOrder->price();
 	      if(noChangeInPrice){
@@ -114,12 +114,12 @@ namespace obLib{
 	      }else{
 		  // Price changes
 		  // To Do
-		  _depth.replace_order(it->second.getPrice(), order->price(), it->second.open_qty(), order->order_qty(), order->is_buy());
+		  _depth.replace_order(it->second->getPrice(), order->price(), it->second->open_qty(), order->order_qty(), order->is_buy());
 	      }
 	      // Set the new Open Quantity
-	      it->second.change_qty(delta);
+	      it->second->change_qty(delta);
 	      if(!noChangeInPrice){
-		  it->second.setPrice(order->price());
+		  it->second->setPrice(order->price());
 	      }
 	  }else{
 	      // Treat it as new order
